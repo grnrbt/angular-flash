@@ -9,7 +9,7 @@
 
   var templateUrl = 'template/flash-messages.html';
 
-  var module = angular.module('ngFlash', ['ng']);
+  var module = angular.module('ngFlash', ['ng', 'ngSanitize']);
 
   module.provider('$flash', function() {
     // How long to wait before removing the flash message.

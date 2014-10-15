@@ -16,5 +16,8 @@
     "node_modules",
     "bower_components",
     "lib"
-  ]
+  ],
+  "dependencies": {
+    "angular-sanitize": "*"
+  }
 }
