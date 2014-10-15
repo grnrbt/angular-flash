@@ -34,10 +34,14 @@
     this.$get = function($rootScope, $timeout) {
       var flash;
 
+      // Where we store flash messages.
+      $rootScope._flash = $rootScope._flash || { messages: [] };
+      var flashStore = $rootScope._flash;
+
       var findExisting = function(message) {
         var found;
 
-        angular.forEach(flash.messages, function(flashMessage) {
+        angular.forEach(flashStore.messages, function(flashMessage) {
           if (flashMessage.message === message) {
             found = flashMessage;
           }
@@ -52,7 +56,7 @@
       function FlashMessage(message, options) {
         options = options || {};
 
-        this.message  = message
+        this.message  = message;
         this.duration = options.duration || defaultDuration;
         this.type     = options.type || defaultType;
         this.persist  = options.persist;
@@ -69,7 +73,7 @@
           existing.remove();
         }
 
-        flash.messages.push(this.init());
+        flashStore.messages.push(this.init());
 
         return this;
       };
@@ -79,7 +83,7 @@
        */
       FlashMessage.prototype.remove = function() {
         this.cancelTimeout();
-        flash.messages.splice(flash.messages.indexOf(this), 1);
+        flashStore.messages.splice(flashStore.messages.indexOf(this), 1);
       };
 
       /**
@@ -149,14 +153,11 @@
         return new FlashMessage(message, options).add();
       };
 
-      // Where we store flash messages.
-      flash.messages = []
-
       /**
        * Reset the flash messages
        */
       flash.reset = function() {
-        flash.messages.length = 0;
+        flashStore.messages.length = 0;
       };
 
       return flash;
@@ -167,10 +168,10 @@
     return {
       restrict: 'EA',
       replace: true,
-      scope: {},
+//      scope: {},
       templateUrl: templateUrl,
-      controller: function($scope, $flash) {
-        $scope.messages = $flash.messages;
+      controller: function($scope) {
+
       }
     };
   });
@@ -179,7 +180,7 @@
     if (!$templateCache.get(templateUrl)) {
       $templateCache.put(templateUrl,
         '<div class="flash-messages">' +
-          '<div class="flash-message {{message.type}}" ng-repeat="message in messages">' +
+          '<div class="flash-message {{message.type}}" ng-repeat="message in _flash.messages">' +
             '<a href="" class="close" ng-click="message.remove()"></a>' +
             '<span class="flash-content" ng-bind-html="message.message"></span>' +
           '</div>' +
