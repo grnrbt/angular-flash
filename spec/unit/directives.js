@@ -49,7 +49,7 @@ describe('flashMessages', function() {
     var innerScope = scope.$new();
     compile(anotherFlashElem)(innerScope);
 
-    flash('Scoped flash message');
+    flash('Scoped flash message', {scope: innerScope});
 
     expect(elem).to.be.empty;
     expect(anotherFlashElem.find('.alert')).to.have.text('Scoped flash message');

@@ -38,18 +38,6 @@
       $rootScope._flash = $rootScope._flash || { messages: [] };
       var flashStore = $rootScope._flash;
 
-      var findExisting = function(message) {
-        var found;
-
-        angular.forEach(flashStore.messages, function(flashMessage) {
-          if (flashMessage.message === message) {
-            found = flashMessage;
-          }
-        });
-
-        return found;
-      };
-
       /**
        * Flash that represents a flash message.
        */
@@ -61,19 +49,37 @@
         this.type     = options.type || defaultType;
         this.persist  = options.persist;
         this.unique   = true;
+        this.flashStore = flashStore;
+        if (options.scope) {
+//        TODO: This can cause issues
+          options.scope._flash = { messages: [] };
+          this.flashStore = options.scope._flash;
+        }
+      };
+
+      FlashMessage.prototype.findExisting = function(message) {
+        var found;
+
+        angular.forEach(this.flashStore.messages, function(flashMessage) {
+          if (flashMessage.message === message) {
+            found = flashMessage;
+          }
+        });
+
+        return found;
       };
 
       /**
        * Init and add this flash message.
        */
       FlashMessage.prototype.add = function() {
-        var existing = findExisting(this.message);
+        var existing = this.findExisting(this.message);
 
         if (existing) {
           existing.remove();
         }
 
-        flashStore.messages.push(this.init());
+        this.flashStore.messages.push(this.init());
 
         return this;
       };
@@ -83,7 +89,7 @@
        */
       FlashMessage.prototype.remove = function() {
         this.cancelTimeout();
-        flashStore.messages.splice(flashStore.messages.indexOf(this), 1);
+        this.flashStore.messages.splice(this.flashStore.messages.indexOf(this), 1);
       };
 
       /**
