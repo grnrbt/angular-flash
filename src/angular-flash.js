@@ -34,9 +34,7 @@
     this.$get = function($rootScope, $timeout) {
       var flash;
 
-      // Where we store flash messages.
-      $rootScope._flash = $rootScope._flash || { messages: [] };
-      var flashStore = $rootScope._flash;
+      var rootScope = $rootScope;
 
       /**
        * Flash that represents a flash message.
@@ -49,18 +47,21 @@
         this.type     = options.type || defaultType;
         this.persist  = options.persist;
         this.unique   = true;
-        this.flashStore = flashStore;
-        if (options.scope) {
-//        TODO: This can cause issues
-          options.scope._flash = { messages: [] };
-          this.flashStore = options.scope._flash;
+        this.scope    = options.scope || rootScope;
+
+        if (!this.scope.hasOwnProperty('_flash')) {
+          this.scope._flash = { messages: [] };
         }
+      }
+
+      FlashMessage.prototype.messages = function() {
+        return this.scope._flash.messages;
       };
 
       FlashMessage.prototype.findExisting = function(message) {
         var found;
 
-        angular.forEach(this.flashStore.messages, function(flashMessage) {
+        angular.forEach(this.messages(), function(flashMessage) {
           if (flashMessage.message === message) {
             found = flashMessage;
           }
@@ -79,7 +80,7 @@
           existing.remove();
         }
 
-        this.flashStore.messages.push(this.init());
+        this.messages().push(this.init());
 
         return this;
       };
@@ -89,7 +90,12 @@
        */
       FlashMessage.prototype.remove = function() {
         this.cancelTimeout();
-        this.flashStore.messages.splice(this.flashStore.messages.indexOf(this), 1);
+        this.messages().splice(this.messages().indexOf(this), 1);
+
+        // If there are no more scoped messages, fall back to the higher scope
+        if (this.scope != rootScope && this.messages().length == 0) {
+          delete this.scope._flash;
+        }
       };
 
       /**
@@ -162,8 +168,9 @@
       /**
        * Reset the flash messages
        */
-      flash.reset = function() {
-        flashStore.messages.length = 0;
+      flash.reset = function(scope) {
+        scope = scope || rootScope;
+        scope._flash.messages.length = 0;
       };
 
       return flash;
@@ -174,11 +181,7 @@
     return {
       restrict: 'EA',
       replace: true,
-//      scope: {},
-      templateUrl: templateUrl,
-      controller: function($scope) {
-
-      }
+      templateUrl: templateUrl
     };
   });
 

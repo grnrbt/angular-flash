@@ -1,11 +1,12 @@
 describe('$flash', function() {
-  var clock, messages;
+  var messages;
 
   beforeEach(module('ngFlash'));
 
   beforeEach(inject(function($rootScope) {
-    messages = function() {
-      return $rootScope._flash.messages;
+    messages = function(scope) {
+      scope = scope || $rootScope;
+      return scope._flash.messages;
     }
   }));
 
@@ -67,6 +68,23 @@ describe('$flash', function() {
     expect(messages()).to.be.empty;
   }));
 
+  it('scopes the messages', inject(function($flash, $timeout, $rootScope) {
+    var innerScope = $rootScope.$new();
+    $flash('Global');
+    $flash('Scoped', { scope: innerScope, duration: 10000 });
+
+    expect(messages()[0].message).to.eq("Global");
+    expect(messages(innerScope)[0].message).to.eq("Scoped");
+
+    $timeout.flush(5001);
+
+    expect(messages()).to.be.empty;
+    expect(messages(innerScope).length).to.eq(1);
+
+    $timeout.flush(5001);
+    expect(messages(innerScope).length).to.be.empty;
+  }));
+
   describe('FlashMessage', function() {
     var flashMessage;
 
@@ -89,6 +107,19 @@ describe('$flash', function() {
 
       $flash.reset();
       expect(messages()).to.be.empty;
+    }));
+
+    it('resets scoped messages', inject(function($flash, $rootScope) {
+      var innerScope = $rootScope.$new();
+      $flash('Hello World');
+      $flash('Scoped Hello World', { scope: innerScope });
+
+      $flash.reset();
+      expect(messages()).to.be.empty;
+      expect(messages(innerScope).length).to.eq(1);
+
+      $flash.reset(innerScope);
+      expect(messages(innerScope).length).to.be.empty;
     }));
   });
 });

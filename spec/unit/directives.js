@@ -1,12 +1,11 @@
 describe('flashMessages', function() {
-  var elem, scope, flash, compile;
+  var elem, scope, flash;
 
   beforeEach(module('ngFlash'));
 
   beforeEach(inject(function($rootScope, $compile, $flash) {
     elem = angular.element('<div flash-messages></div>');
     scope = $rootScope.$new();
-    compile = $compile;
 
     $compile(elem)(scope);
     scope.$digest();
@@ -44,14 +43,48 @@ describe('flashMessages', function() {
     expect(elem.find('.flash-content')).to.have.html('<p>Test </p>');
   });
 
-  it('scopes the flash messages', function() {
-    var anotherFlashElem = angular.element('<div flash-messages></div>');
-    var innerScope = scope.$new();
-    compile(anotherFlashElem)(innerScope);
+  describe('scoped flash messages', function() {
+    var scopedElem, innerScope;
 
-    flash('Scoped flash message', {scope: innerScope});
+    beforeEach(inject(function($compile) {
+      scopedElem = angular.element('<div flash-messages></div>');
+      innerScope = scope.$new();
+      $compile(scopedElem)(innerScope);
+    }));
 
-    expect(elem).to.be.empty;
-    expect(anotherFlashElem.find('.alert')).to.have.text('Scoped flash message');
+    it('scopes the flash messages', function() {
+      flash('Scoped flash message', {scope: innerScope});
+
+      expect(elem).to.be.empty;
+      expect(scopedElem.find('.alert')).to.have.text('Scoped flash message');
+    });
+
+    it('handles multiple messages', function() {
+      flash('First Scoped message.', {scope: innerScope});
+      flash('Second Scoped message.', {scope: innerScope});
+
+      expect(scopedElem.find('.alert')).to.have.text('First Scoped message.Second Scoped message.');
+    });
+
+    it('overrides global messages with scoped messages', function() {
+      flash('Global flash message');
+
+      expect(elem.find('.alert')).to.have.text('Global flash message');
+      expect(scopedElem.find('.alert')).to.have.text('Global flash message');
+
+      flash('Scoped flash message', {scope: innerScope});
+
+      expect(elem.find('.alert')).to.have.text('Global flash message');
+      expect(scopedElem.find('.alert')).to.have.text('Scoped flash message');
+    });
+
+    it('shows global messages when there are no more scoped messages', inject(function($timeout) {
+      flash('Scoped flash message', {scope: innerScope});
+      $timeout.flush();
+      flash('Global flash message');
+
+      expect(elem.find('.alert')).to.have.text('Global flash message');
+      expect(scopedElem.find('.alert')).to.have.text('Global flash message');
+    }));
   });
 });
