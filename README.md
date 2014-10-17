@@ -50,6 +50,12 @@ Flash message with a custom duration
 $flash('Hello World', { duration: 10000 });
 ```
 
+Flash message only within the current scope
+
+```javascript
+$flash('Hello World', { scope: $scope });
+```
+
 ### Configuration
 
 **routeChangeSuccess**

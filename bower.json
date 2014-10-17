@@ -1,6 +1,6 @@
 {
   "name": "angular-flash",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "main": "./dist/angular-flash.min.js",
   "repository": {
     "type": "git",
