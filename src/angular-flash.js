@@ -24,6 +24,12 @@
       defaultType = type;
     };
 
+    // Where the flash messages are stored on the scope.
+    var flashScopeKey = '_flash';
+    this.setFlashScopeKey = function(newflashScopeKey) {
+      flashScopeKey = newflashScopeKey;
+    };
+
     // Flash messages will not persist across route change events unless
     // explicitly specified.
     var routeChangeSuccess = '$routeChangeSuccess';
@@ -49,19 +55,19 @@
         this.unique   = true;
         this.scope    = options.scope || rootScope;
 
-        if (!this.scope.hasOwnProperty('_flash')) {
-          this.scope._flash = { messages: [] };
+        if (!this.scope.hasOwnProperty(flashScopeKey)) {
+          this.scope[flashScopeKey] = { messages: [] };
         }
       }
 
-      FlashMessage.prototype.messages = function() {
-        return this.scope._flash.messages;
+      FlashMessage.prototype._messages = function() {
+        return this.scope[flashScopeKey].messages;
       };
 
       FlashMessage.prototype.findExisting = function(message) {
         var found;
 
-        angular.forEach(this.messages(), function(flashMessage) {
+        angular.forEach(this._messages(), function(flashMessage) {
           if (flashMessage.message === message) {
             found = flashMessage;
           }
@@ -80,7 +86,7 @@
           existing.remove();
         }
 
-        this.messages().push(this.init());
+        this._messages().push(this.init());
 
         return this;
       };
@@ -90,10 +96,10 @@
        */
       FlashMessage.prototype.remove = function() {
         this.cancelTimeout();
-        this.messages().splice(this.messages().indexOf(this), 1);
+        this._messages().splice(this._messages().indexOf(this), 1);
 
         // If there are no more scoped messages, fall back to the higher scope
-        if (this.scope != rootScope && this.messages().length == 0) {
+        if (this.scope != rootScope && this._messages().length == 0) {
           delete this.scope._flash;
         }
       };
@@ -170,7 +176,7 @@
        */
       flash.reset = function(scope) {
         scope = scope || rootScope;
-        scope._flash.messages.length = 0;
+        scope[flashScopeKey].messages.length = 0;
       };
 
       return flash;
