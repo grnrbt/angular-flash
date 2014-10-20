@@ -85,6 +85,19 @@ describe('$flash', function() {
     expect(messages(innerScope).length).to.be.empty;
   }));
 
+  it('does not reset scope when adding a duplicate message', inject(function($flash, $timeout, $rootScope) {
+    var innerScope = $rootScope.$new();
+    $flash('Scoped', { scope: innerScope });
+    $flash('Scoped', { scope: innerScope, duration: 100 });
+
+    expect(messages(innerScope)[0].message).to.eq("Scoped");
+    expect(messages(innerScope)[0].scope).to.eq(innerScope);
+
+    // Default timeout was overridden and local scope was reset
+    $timeout.flush(101);
+    expect(innerScope._flash).to.be.undefined;
+  }));
+
   describe('FlashMessage', function() {
     var flashMessage;
 

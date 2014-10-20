@@ -83,7 +83,10 @@
         var existing = this.findExisting(this.message);
 
         if (existing) {
-          existing.remove();
+          // If we're replacing a message on the same scope, don't reset. Otherwise,
+          // this new message will show up at the higher scope
+          var shouldResetScope = existing.scope != this.scope;
+          existing._remove(shouldResetScope);
         }
 
         this._messages().push(this.init());
@@ -93,15 +96,27 @@
 
       /**
        * Remove this flash message.
+       *
+       * @param {Boolean} shouldResetScope - Determines whether we should reset the local scope.
+       *
        */
-      FlashMessage.prototype.remove = function() {
+      FlashMessage.prototype._remove = function(shouldResetScope) {
         this.cancelTimeout();
         this._messages().splice(this._messages().indexOf(this), 1);
 
-        // If there are no more scoped messages, fall back to the higher scope
-        if (this.scope != rootScope && this._messages().length == 0) {
+        // Fall back to the higher scope if required. If we don't do this, the directive will
+        // never go back to it default behaviour of displaying rootScope messages
+        var noMoreScopedMessages = this.scope != rootScope && this._messages().length == 0;
+        if (shouldResetScope && noMoreScopedMessages) {
           delete this.scope._flash;
         }
+      };
+
+      /**
+       * Remove this flash message.
+       */
+      FlashMessage.prototype.remove = function() {
+        this._remove(true);
       };
 
       /**
