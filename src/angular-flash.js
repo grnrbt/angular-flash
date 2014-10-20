@@ -9,7 +9,7 @@
 
   var templateUrl = 'template/flash-messages.html';
 
-  var module = angular.module('ngFlash', ['ng']);
+  var module = angular.module('ngFlash', ['ng', 'ngSanitize']);
 
   module.provider('$flash', function() {
     // How long to wait before removing the flash message.
@@ -24,6 +24,12 @@
       defaultType = type;
     };
 
+    // Where the flash messages are stored on the scope.
+    var flashScopeKey = '_flash';
+    this.setFlashScopeKey = function(newflashScopeKey) {
+      flashScopeKey = newflashScopeKey;
+    };
+
     // Flash messages will not persist across route change events unless
     // explicitly specified.
     var routeChangeSuccess = '$routeChangeSuccess';
@@ -34,10 +40,34 @@
     this.$get = function($rootScope, $timeout) {
       var flash;
 
-      var findExisting = function(message) {
+      var rootScope = $rootScope;
+
+      /**
+       * Flash that represents a flash message.
+       */
+      function FlashMessage(message, options) {
+        options = options || {};
+
+        this.message  = message;
+        this.duration = options.duration || defaultDuration;
+        this.type     = options.type || defaultType;
+        this.persist  = options.persist;
+        this.unique   = true;
+        this.scope    = options.scope || rootScope;
+
+        if (!this.scope.hasOwnProperty(flashScopeKey)) {
+          this.scope[flashScopeKey] = { messages: [] };
+        }
+      }
+
+      FlashMessage.prototype._messages = function() {
+        return this.scope[flashScopeKey].messages;
+      };
+
+      FlashMessage.prototype.findExisting = function(message) {
         var found;
 
-        angular.forEach(flash.messages, function(flashMessage) {
+        angular.forEach(this._messages(), function(flashMessage) {
           if (flashMessage.message === message) {
             found = flashMessage;
           }
@@ -47,39 +77,46 @@
       };
 
       /**
-       * Flash that represents a flash message.
-       */
-      function FlashMessage(message, options) {
-        options = options || {};
-
-        this.message  = message
-        this.duration = options.duration || defaultDuration;
-        this.type     = options.type || defaultType;
-        this.persist  = options.persist;
-        this.unique   = true;
-      };
-
-      /**
        * Init and add this flash message.
        */
       FlashMessage.prototype.add = function() {
-        var existing = findExisting(this.message);
+        var existing = this.findExisting(this.message);
 
         if (existing) {
-          existing.remove();
+          // If we're replacing a message on the same scope, don't reset. Otherwise,
+          // this new message will show up at the higher scope
+          var shouldResetScope = existing.scope != this.scope;
+          existing._remove(shouldResetScope);
         }
 
-        flash.messages.push(this.init());
+        this._messages().push(this.init());
 
         return this;
       };
 
       /**
        * Remove this flash message.
+       *
+       * @param {Boolean} shouldResetScope - Determines whether we should reset the local scope.
+       *
+       */
+      FlashMessage.prototype._remove = function(shouldResetScope) {
+        this.cancelTimeout();
+        this._messages().splice(this._messages().indexOf(this), 1);
+
+        // Fall back to the higher scope if required. If we don't do this, the directive will
+        // never go back to it default behaviour of displaying rootScope messages
+        var noMoreScopedMessages = this.scope != rootScope && this._messages().length == 0;
+        if (shouldResetScope && noMoreScopedMessages) {
+          delete this.scope._flash;
+        }
+      };
+
+      /**
+       * Remove this flash message.
        */
       FlashMessage.prototype.remove = function() {
-        this.cancelTimeout();
-        flash.messages.splice(flash.messages.indexOf(this), 1);
+        this._remove(true);
       };
 
       /**
@@ -149,14 +186,12 @@
         return new FlashMessage(message, options).add();
       };
 
-      // Where we store flash messages.
-      flash.messages = []
-
       /**
        * Reset the flash messages
        */
-      flash.reset = function() {
-        flash.messages.length = 0;
+      flash.reset = function(scope) {
+        scope = scope || rootScope;
+        scope[flashScopeKey].messages.length = 0;
       };
 
       return flash;
@@ -167,11 +202,7 @@
     return {
       restrict: 'EA',
       replace: true,
-      scope: {},
-      templateUrl: templateUrl,
-      controller: function($scope, $flash) {
-        $scope.messages = $flash.messages;
-      }
+      templateUrl: templateUrl
     };
   });
 
@@ -179,7 +210,7 @@
     if (!$templateCache.get(templateUrl)) {
       $templateCache.put(templateUrl,
         '<div class="flash-messages">' +
-          '<div class="flash-message {{message.type}}" ng-repeat="message in messages">' +
+          '<div class="flash-message {{message.type}}" ng-repeat="message in _flash.messages">' +
             '<a href="" class="close" ng-click="message.remove()"></a>' +
             '<span class="flash-content" ng-bind-html="message.message"></span>' +
           '</div>' +
