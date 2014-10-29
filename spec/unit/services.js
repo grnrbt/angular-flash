@@ -23,6 +23,27 @@ describe('$flash', function() {
     expect(messages()).to.be.empty;
   }));
 
+  it('duplicate flash when different group', inject(function($flash, $timeout) {
+    $flash('Hello World',   { group: 'group.1' });
+    $flash('Hello Jupiter', { group: 'group.2' });
+
+    expect(messages().length).to.eq(2);
+  }));
+
+  it('dont duplicate flash sharing same group', inject(function($flash, $timeout) {
+    $flash('Hello World',   { group: 'group.1' });
+    $flash('Hello Jupiter', { group: 'group.1' });
+
+    expect(messages().length).to.eq(1);
+  }));
+
+  it('dont duplicate flash when message is the same and no group specified', inject(function($flash, $timeout) {
+    $flash('Hello World');
+    $flash('Hello World');
+
+    expect(messages().length).to.eq(1);
+  }));
+
   it('allows a custom duration to be specified', inject(function($flash, $timeout) {
     $flash('Hello World', { duration: 1000 });
 
