@@ -35,6 +35,7 @@ describe('$flash', function() {
     $flash('Hello Jupiter', { group: 'group.1' });
 
     expect(messages().length).to.eq(1);
+    expect(messages()[0].message).to.eq("Hello Jupiter");
   }));
 
   it('dont duplicate flash when message is the same and no group specified', inject(function($flash, $timeout) {
