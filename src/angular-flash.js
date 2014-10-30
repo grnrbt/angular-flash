@@ -52,6 +52,7 @@
         this.duration = options.duration || defaultDuration;
         this.type     = options.type || defaultType;
         this.persist  = options.persist;
+        this.key      = options.key || this.message;
         this.unique   = true;
         this.scope    = options.scope || rootScope;
 
@@ -64,11 +65,12 @@
         return this.scope[flashScopeKey].messages;
       };
 
-      FlashMessage.prototype.findExisting = function(message) {
+      FlashMessage.prototype.findExisting = function() {
         var found;
+        var _this = this;
 
         angular.forEach(this._messages(), function(flashMessage) {
-          if (flashMessage.message === message) {
+          if (flashMessage.key === _this.key) {
             found = flashMessage;
           }
         });
@@ -80,7 +82,7 @@
        * Init and add this flash message.
        */
       FlashMessage.prototype.add = function() {
-        var existing = this.findExisting(this.message);
+        var existing = this.findExisting();
 
         if (existing) {
           // If we're replacing a message on the same scope, don't reset. Otherwise,

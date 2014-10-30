@@ -23,6 +23,28 @@ describe('$flash', function() {
     expect(messages()).to.be.empty;
   }));
 
+  it('is unique by key', inject(function($flash, $timeout) {
+    $flash('Hello World',   { key: 'key.1' });
+    $flash('Hello Jupiter', { key: 'key.2' });
+
+    expect(messages().length).to.eq(2);
+  }));
+
+  it('is unique by key', inject(function($flash, $timeout) {
+    $flash('Hello World',   { key: 'key.1' });
+    $flash('Hello Jupiter', { key: 'key.1' });
+
+    expect(messages().length).to.eq(1);
+    expect(messages()[0].message).to.eq("Hello Jupiter");
+  }));
+
+  it('is unique by message content', inject(function($flash, $timeout) {
+    $flash('Hello World');
+    $flash('Hello World');
+
+    expect(messages().length).to.eq(1);
+  }));
+
   it('allows a custom duration to be specified', inject(function($flash, $timeout) {
     $flash('Hello World', { duration: 1000 });
 
