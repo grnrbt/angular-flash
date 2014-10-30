@@ -23,16 +23,16 @@ describe('$flash', function() {
     expect(messages()).to.be.empty;
   }));
 
-  it('is unique by group', inject(function($flash, $timeout) {
-    $flash('Hello World',   { group: 'group.1' });
-    $flash('Hello Jupiter', { group: 'group.2' });
+  it('is unique by key', inject(function($flash, $timeout) {
+    $flash('Hello World',   { key: 'key.1' });
+    $flash('Hello Jupiter', { key: 'key.2' });
 
     expect(messages().length).to.eq(2);
   }));
 
-  it('is unique by group', inject(function($flash, $timeout) {
-    $flash('Hello World',   { group: 'group.1' });
-    $flash('Hello Jupiter', { group: 'group.1' });
+  it('is unique by key', inject(function($flash, $timeout) {
+    $flash('Hello World',   { key: 'key.1' });
+    $flash('Hello Jupiter', { key: 'key.1' });
 
     expect(messages().length).to.eq(1);
     expect(messages()[0].message).to.eq("Hello Jupiter");

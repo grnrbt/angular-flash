@@ -52,7 +52,7 @@
         this.duration = options.duration || defaultDuration;
         this.type     = options.type || defaultType;
         this.persist  = options.persist;
-        this.group    = options.group;
+        this.key      = options.key;
         this.unique   = true;
         this.scope    = options.scope || rootScope;
 
@@ -70,8 +70,8 @@
         var _this = this;
 
         angular.forEach(this._messages(), function(flashMessage) {
-          if (_this.group) {
-            if (flashMessage.group === _this.group) {
+          if (_this.key) {
+            if (flashMessage.key === _this.key) {
               found = flashMessage;
             }
           } else {
